@@ -80,6 +80,7 @@ class growi :
         res_remove = requests.post(self.growi_url("pages.remove"), params=self.growi_params, data=payload)
         return res_remove
     
+    # FIXME: Content-Type header を上手く指定できないためか img をupload しても growi page では text/plain になってしまう
     # @param string path : ファイルをアップロードするページのパス
     # @param string file_path : アップロードするローカルファイルのパス
     # @return string file_path : growi におけるアップロードしたファイルのパス (ex: /attachment/hogehoge/piyopiyo)
