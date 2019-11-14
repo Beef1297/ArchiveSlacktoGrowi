@@ -1,12 +1,12 @@
-import requests
-import re
-from slack_message import slack_message
-
 class slack :
+    # クラス内で import
+    import requests
+    import re
+    from slack_message import slack_message
     def __init__(self, token) :
         self.slack_params = {"token": token}
         self.users = {} # user_id と real_name を簡単にキャッシュしておく
-        self.fetchUsersList()
+        self.fetch_users_list()
         return
     
     # @param string method : Slack の API method
@@ -16,14 +16,14 @@ class slack :
 
     # @param
     # @return 辞書型配列 slack のチャンネルのリストを返す  (詳しくは Slack API Method 参照)
-    def getConversationsList(self) :
+    def get_conversations_list(self) :
         res = requests.get(self.slack_url("conversations.list"), params=self.slack_params)
         return res.json()["channels"]
 
     # @param string channel : チャンネルの名前
     # @return string チャンネルの IDを返す
-    def getChannelId(self, channel) :
-        channel_info_list = self.getConversationsList()
+    def get_channel_id(self, channel) :
+        channel_info_list = self.get_conversations_list()
         for channel_info in channel_info_list :
             if (channel_info["name"] == channel) :
                 return channel_info["id"] 
@@ -32,7 +32,7 @@ class slack :
     # @method slack ユーザリストを取得する
     # @param
     # @return user のリストをオブジェクトのプロパティとして取得しておく (簡単なキャッシュのつもり)
-    def fetchUsersList(self) :
+    def fetch_users_list(self) :
         res_userslist = requests.get(self.slack_url("users.list"), params=self.slack_params)
         for res in res_userslist.json()["members"] :
             if ("real_name" in res) :
@@ -42,17 +42,17 @@ class slack :
         return
     
     # dictionary 型のmessage (response 1単位が渡される)
-    def getUserName(self, message) :
+    def get_user_name(self, message) :
         username = ""
         if ("user" in message) :
-            username = self.getUserNamebyId(message["user"])
+            username = self.get_user_namebyId(message["user"])
         elif ("username" in message) :
             username = message["username"]
         return username
     
     # @ param string user_id : slack の ユーザid
     # @return string name : slack の名前
-    def getUserNamebyId(self, user_id) :
+    def get_user_namebyId(self, user_id) :
         if (user_id in self.users) :
             return self.users[user_id]
         else :
@@ -64,7 +64,7 @@ class slack :
     
     # @param string text : slack メッセージのテキスト (本文)
     # @return string t : メッセージの中から ユーザID を名前に変換したもの
-    def replaceUserIdtoUserName(self, text) :
+    def replace_userid_to_username(self, text) :
         uid_list = re.findall(r'<@([0-9A-Z]+)>', text)
         t = text
         if (uid_list is not None) :
@@ -83,8 +83,8 @@ class slack :
     # スレッドは，children に追加していく．最新のメッセージから取得されるので時系列順に並べるために
     # 逆から参照するようにしている
     # 同じ thread_ts を持つもので，一番時系列が古いものを親として考える．
-    def fetchChannelMessages(self, channel) :
-        channel_id = self.getChannelId(channel)
+    def fetch_channel_messages(self, channel) :
+        channel_id = self.get_channel_id(channel)
         params_ = self.slack_params.copy()
         params_["channel"] = channel_id
         params_["count"] = 1000
@@ -102,16 +102,16 @@ class slack :
                         # ここの username の取り扱いがすごい面倒
                         # もっときれいに書きたい
                         # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
-                        username = self.getUserName(fetch_messages[i])
+                        username = self.get_user_name(fetch_messages[i])
                         slack_message = slack_message(fetch_messages[i], self, username)
                         messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(slack_message)
                         #print(fetch_messages[i])
                     else :
-                        username= self.getUserName(fetch_messages[i])
+                        username= self.get_user_name(fetch_messages[i])
                         messages.append(slack_message(fetch_messages[i], self, username))
                         thread_ts_dict[fetch_messages[i]["thread_ts"]] = len(messages)-1
                 else :
-                    messages.append(slack_message(fetch_messages[i], self, self.getUserName(fetch_messages[i])))
+                    messages.append(slack_message(fetch_messages[i], self, self.get_user_name(fetch_messages[i])))
                     
             #print(res_fetch.json()["has_more"])
             

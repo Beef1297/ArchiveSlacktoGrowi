@@ -15,7 +15,7 @@ def formatting_messages(title, messages, slackclient) :
     print("formatting messages...")
     formattedMessages = title + "\n"
     for message in messages :
-        m = slackclient.replaceUserIdtoUserName(message.text)
+        m = slackclient.replace_userid_to_username(message.text)
         formattedMessages += "\n- " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n"+ m + "\n"
         for attachment in message.growi_attachments :
             if (attachment is not "hidden_by_limit") :
@@ -57,7 +57,7 @@ if __name__ == "__main__" :
     path = log_path + channel_name
     growi = growi(tokens["growi"]["token"])
     slack = growi(tokens["slack"]["token"])
-    messages = slack.fetchChannelMessages(channel_name)
+    messages = slack.fetch_channel_messages(channel_name)
     '''
     for m in messages :
         print(m.text)
@@ -65,12 +65,12 @@ if __name__ == "__main__" :
             print(c.text)
     '''
     # FIXME: Create -> Update は無駄
-    growi.createPage("just making a page", path)
+    growi.create_page("just making a page", path)
     for message in messages :
         for file in message.files :
-            message.growi_attachments.append(growi.uploadAttachment(path, file))
+            message.growi_attachments.append(growi.upload_attachment(path, file))
         for child_message in message.children :
             for file in child_message.files :
-                child_message.growi_attachments.append(growi.uploadAttachment(path, file))
+                child_message.growi_attachments.append(growi.upload_attachment(path, file))
     formattedMessages = formatting_messages("# Archive: " + channel_name, messages, slack)
-    res = growi.updatePage(formattedMessages, path)
+    res = growi.update_page(formattedMessages, path)

@@ -9,31 +9,31 @@ class slack_message :
         self.slackclient = _slackclient
         self.message = _message
         self.username = _username
-        self.text = self.getText()
+        self.text = self.get_text()
         self.thread_ts = self.getThread_TS() if self.isThread() else None
-        self.ts = self.getTS()
-        self.files = self.getFiles()
+        self.ts = self.get_ts()
+        self.files = self.get_files()
         self.growi_attachments = []
         self.children = [] # thread 下のslack message
     
-    def getUserName(self) :
+    def get_user_name(self) :
         username = ""
         if ("user" in self.message) :
-            username = self.getUserNamebyId(self.message["user"])
+            username = self.get_user_namebyId(self.message["user"])
         elif ("username" in self.message) :
             username = self.message["username"]
         return username
     
-    def getUserNamebyId(self, user_id) :
+    def get_user_namebyId(self, user_id) :
         params_ = self.slackclient.slack_params.copy()
         params_["user"] = user_id
         res_user_info = requests.get(self.slackclient.slack_url("users.info"), params=params_)
         return res_user_info.json()["user"]["real_name"]
     
-    def getText(self) :
-        return self.slackclient.replaceUserIdtoUserName(self.message["text"])
+    def get_text(self) :
+        return self.slackclient.replace_userid_to_username(self.message["text"])
         
-    def getTS(self) :
+    def get_ts(self) :
         if ("ts" in self.message) :
             return self.message["ts"]
         else :
@@ -45,7 +45,7 @@ class slack_message :
     def getThread_TS(self) :
         return self.message["thread_ts"]
     
-    def getFiles(self) :
+    def get_files(self) :
         full_filenames = []
         if ("files" in self.message) :
             for file_info in self.message["files"] :
@@ -68,6 +68,6 @@ class slack_message :
                     f.write(res_file.content)
         return full_filenames
 
-    def replaceIdtoName(self) :
+    def replace_id_to_name(self) :
         pass
     
