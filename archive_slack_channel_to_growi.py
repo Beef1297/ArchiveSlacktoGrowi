@@ -3,15 +3,15 @@ import os
 import sys
 import json
 from datetime import datetime
-from SlackClient import Slack
-from GrowiClient import Growi
-from SlackMessage import SlackMessage
+from slack_client import slack
+from growi_client import growi
+from slack_message import slack_message
 
 
 # growi page 制作のために，slack から取得したメッセージを整形
 # 最新メッセージが一番最初に保存されているので，逆順にみていく
 
-def formattingMessages(title, messages, slackclient) :
+def formatting_messages(title, messages, slackclient) :
     print("formatting messages...")
     formattedMessages = title + "\n"
     for message in messages :
@@ -55,8 +55,8 @@ if __name__ == "__main__" :
 
     log_path = "/Log/slack_channel/"
     path = log_path + channel_name
-    growi = Growi(tokens["growi"]["token"])
-    slack = Slack(tokens["slack"]["token"])
+    growi = growi(tokens["growi"]["token"])
+    slack = growi(tokens["slack"]["token"])
     messages = slack.fetchChannelMessages(channel_name)
     '''
     for m in messages :
@@ -64,7 +64,7 @@ if __name__ == "__main__" :
         for c in m.children :
             print(c.text)
     '''
-
+    # FIXME: Create -> Update は無駄
     growi.createPage("just making a page", path)
     for message in messages :
         for file in message.files :
@@ -72,5 +72,5 @@ if __name__ == "__main__" :
         for child_message in message.children :
             for file in child_message.files :
                 child_message.growi_attachments.append(growi.uploadAttachment(path, file))
-    formattedMessages = formattingMessages("# Archive: " + channel_name, messages, slack)
+    formattedMessages = formatting_messages("# Archive: " + channel_name, messages, slack)
     res = growi.updatePage(formattedMessages, path)

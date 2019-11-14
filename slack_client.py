@@ -1,8 +1,8 @@
 import requests
 import re
-from SlackMessage import SlackMessage
+from slack_message import slack_message
 
-class Slack :
+class slack :
     def __init__(self, token) :
         self.slack_params = {"token": token}
         self.users = {} # user_id と real_name を簡単にキャッシュしておく
@@ -75,11 +75,11 @@ class Slack :
                 
         return t
     
-    # SlackMessage を 配列で返す
+    # slack_message を 配列で返す
     # https://api.slack.com/methods/channels.history
     # get request で メッセージの最大取得数は 1000
     # 1000 以上メッセージがある場合は，リクエストを複数回投げないといけない
-    # また，取得した後に メッセージは SlackMessage の instance として保存していき，
+    # また，取得した後に メッセージは slack_message の instance として保存していき，
     # スレッドは，children に追加していく．最新のメッセージから取得されるので時系列順に並べるために
     # 逆から参照するようにしている
     # 同じ thread_ts を持つもので，一番時系列が古いものを親として考える．
@@ -103,15 +103,15 @@ class Slack :
                         # もっときれいに書きたい
                         # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
                         username = self.getUserName(fetch_messages[i])
-                        slack_message = SlackMessage(fetch_messages[i], self, username)
+                        slack_message = slack_message(fetch_messages[i], self, username)
                         messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(slack_message)
                         #print(fetch_messages[i])
                     else :
                         username= self.getUserName(fetch_messages[i])
-                        messages.append(SlackMessage(fetch_messages[i], self, username))
+                        messages.append(slack_message(fetch_messages[i], self, username))
                         thread_ts_dict[fetch_messages[i]["thread_ts"]] = len(messages)-1
                 else :
-                    messages.append(SlackMessage(fetch_messages[i], self, self.getUserName(fetch_messages[i])))
+                    messages.append(slack_message(fetch_messages[i], self, self.getUserName(fetch_messages[i])))
                     
             #print(res_fetch.json()["has_more"])
             

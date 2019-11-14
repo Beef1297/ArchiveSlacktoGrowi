@@ -1,6 +1,6 @@
 import requests
 
-class Growi :
+class growi :
     def __init__(self, access_token) :
         self.growi_params = {"access_token": access_token, "user": "admin"}
         self.pages_list = {}

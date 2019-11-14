@@ -4,7 +4,7 @@ import os
 # thread のメッセージなら _is_thread が True になる
 # thread_ts が スレッドのtime stamp
 # file だったら private_url が urlに
-class SlackMessage :
+class slack_message :
     def __init__(self, _message, _slackclient, _username) :
         self.slackclient = _slackclient
         self.message = _message
