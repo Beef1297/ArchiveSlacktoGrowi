@@ -45,14 +45,14 @@ class slack :
     def get_user_name(self, message) :
         username = ""
         if ("user" in message) :
-            username = self.get_user_namebyId(message["user"])
+            username = self.get_user_name_by_id(message["user"])
         elif ("username" in message) :
             username = message["username"]
         return username
     
     # @ param string user_id : slack の ユーザid
     # @return string name : slack の名前
-    def get_user_namebyId(self, user_id) :
+    def get_user_name_by_id(self, user_id) :
         if (user_id in self.users) :
             return self.users[user_id]
         else :

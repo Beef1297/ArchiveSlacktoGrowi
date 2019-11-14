@@ -16,15 +16,17 @@ class slack_message :
         self.growi_attachments = []
         self.children = [] # thread 下のslack message
     
+    # 今は使われていない
     def get_user_name(self) :
         username = ""
         if ("user" in self.message) :
-            username = self.get_user_namebyId(self.message["user"])
+            username = self.get_user_name_by_id(self.message["user"])
         elif ("username" in self.message) :
             username = self.message["username"]
         return username
     
-    def get_user_namebyId(self, user_id) :
+    # 今は使われていない
+    def get_user_name_by_id(self, user_id) :
         params_ = self.slackclient.slack_params.copy()
         params_["user"] = user_id
         res_user_info = requests.get(self.slackclient.slack_url("users.info"), params=params_)
@@ -67,7 +69,3 @@ class slack_message :
                 with open(full_filename, 'wb') as f :
                     f.write(res_file.content)
         return full_filenames
-
-    def replace_id_to_name(self) :
-        pass
-    
