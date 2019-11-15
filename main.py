@@ -56,14 +56,14 @@ if __name__ == "__main__" :
     log_path = "/Log/slack_channel/"
     path = log_path + channel_name
     growi = growi(tokens["growi"]["token"])
-    slack = growi(tokens["slack"]["token"])
+    slack = slack(tokens["slack"]["token"])
     messages = slack.fetch_channel_messages(channel_name)
-    '''
-    for m in messages :
-        print(m.text)
-        for c in m.children :
-            print(c.text)
-    '''
+    
+    #for m in messages :
+    #   print(m.text)
+    #    for c in m.children :
+    #        print(c.text)
+
     # FIXME: Create -> Update は無駄
     growi.create_page("just making a page", path)
     for message in messages :

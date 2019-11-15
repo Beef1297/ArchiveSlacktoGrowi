@@ -68,8 +68,15 @@ class growi :
         else :
             return None
     
-    def check_if_page_exist() :
-        pass
+    # 渡されたpath に growi page があるか確認する
+    # @param string path : growi page の path
+    def check_if_page_exist(self, path) :
+        info = self.get_page_info(path)
+        if info :
+            page_id, revision_id, latest_ts = info
+            return (True, latest_ts)
+        else :
+            return (False, None)
 
     # @param string path : 既存のページのパス
     # @param string _new_path : 新規ページのパス
