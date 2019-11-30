@@ -1,8 +1,9 @@
+import requests
+import re
+from slack_message import slack_message
+
 class slack :
-    # クラス内で import
-    import requests
-    import re
-    from slack_message import slack_message
+    # クラス内で import できない？
     def __init__(self, token) :
         self.slack_params = {"token": token}
         self.users = {} # user_id と real_name を簡単にキャッシュしておく
@@ -72,7 +73,7 @@ class slack :
                 if (uid in self.users) :
                     t = t.replace(uid, self.users[uid])
                 print("replaced.........." + t)
-                
+
         return t
     
     # slack_message を 配列で返す
@@ -83,11 +84,13 @@ class slack :
     # スレッドは，children に追加していく．最新のメッセージから取得されるので時系列順に並べるために
     # 逆から参照するようにしている
     # 同じ thread_ts を持つもので，一番時系列が古いものを親として考える．
-    def fetch_channel_messages(self, channel) :
+    def fetch_channel_messages(self, channel, oldest_ts) :
+
         channel_id = self.get_channel_id(channel)
         params_ = self.slack_params.copy()
         params_["channel"] = channel_id
         params_["count"] = 1000
+        params_["oldest"] = oldest_ts or 0
         all_messages = []
         thread_ts_dict = {}
         
@@ -103,8 +106,8 @@ class slack :
                         # もっときれいに書きたい
                         # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
                         username = self.get_user_name(fetch_messages[i])
-                        slack_message = slack_message(fetch_messages[i], self, username)
-                        messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(slack_message)
+                        sm = slack_message(fetch_messages[i], self, username)
+                        messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(sm)
                         #print(fetch_messages[i])
                     else :
                         username= self.get_user_name(fetch_messages[i])

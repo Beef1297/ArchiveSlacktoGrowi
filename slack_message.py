@@ -16,22 +16,6 @@ class slack_message :
         self.growi_attachments = []
         self.children = [] # thread 下のslack message
     
-    # 今は使われていない
-    def get_user_name(self) :
-        username = ""
-        if ("user" in self.message) :
-            username = self.get_user_name_by_id(self.message["user"])
-        elif ("username" in self.message) :
-            username = self.message["username"]
-        return username
-    
-    # 今は使われていない
-    def get_user_name_by_id(self, user_id) :
-        params_ = self.slackclient.slack_params.copy()
-        params_["user"] = user_id
-        res_user_info = requests.get(self.slackclient.slack_url("users.info"), params=params_)
-        return res_user_info.json()["user"]["real_name"]
-    
     def get_text(self) :
         return self.slackclient.replace_userid_to_username(self.message["text"])
         
