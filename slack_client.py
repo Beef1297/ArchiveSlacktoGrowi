@@ -90,7 +90,7 @@ class slack :
         params_ = self.slack_params.copy()
         params_["channel"] = channel_id
         params_["count"] = 1000
-        params_["oldest"] = oldest_ts or 0
+        params_["oldest"] = oldest_ts or "0"
         all_messages = []
         thread_ts_dict = {}
         

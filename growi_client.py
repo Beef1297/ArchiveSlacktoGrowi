@@ -9,7 +9,7 @@ class growi :
         APPEND = auto()
         OVERWRITE = auto()
 
-    class api_method(Enum) :
+    class api_methods(Enum) :
         PAGES_UPDATE = "pages.update"
         PAGES_CREATE = "pages.create"
         PAGES_GET = "pages.get"
@@ -42,7 +42,8 @@ class growi :
             return result
         else :
             payload = {"body": body, "path": path}
-            res_post = requests.post(self.growi_url(self.api_method.PAGES_CREATE), params=self.growi_params, data=payload)
+            print(self.api_methods.PAGES_CREATE.value)
+            res_post = requests.post(self.growi_url(self.api_methods.PAGES_CREATE.value), params=self.growi_params, data=payload)
             return res_post.json()['page']['status']
 
     # @param string body : ページ本文
@@ -51,7 +52,7 @@ class growi :
     # TODO: 書き換えるか，追記するか選択できるようにする
     # TODO: Body をハッシュ化して更新するかどうかの判定
     def update_page(self, body, path, mode) :
-        is_exist, _ = self.check_if_page_exist()
+        is_exist, _ = self.check_if_page_exist(path)
         if not is_exist :
             raise(Exception("can not update non-exist page {}".format(path)))
         print("updating growi page...")
@@ -64,33 +65,39 @@ class growi :
         if (mode is self.update_mode.APPEND) :
             body = old_body + "\n" + body
             payload = {"body": body, "page_id": page_id, "revision_id": revision_id}
-            res_pages_update = requests.post(self.growi_url(self.api_method.PAGES_UPDATE), params=self.growi_params, data=payload)
+            res_pages_update = requests.post(self.growi_url(self.api_methods.PAGES_UPDATE.value), params=self.growi_params, data=payload)
             print(res_pages_update.json())
             return res_pages_update.json()["page"]["status"]
         elif (mode is self.update_mode.OVERWRITE) :
             payload = {"body": body, "page_id": page_id, "revision_id": revision_id}
-            res_pages_update = requests.post(self.growi_url(self.api_method.PAGES_UPDATE), params=self.growi_params, data=payload)
+            res_pages_update = requests.post(self.growi_url(self.api_methods.PAGES_UPDATE.value), params=self.growi_params, data=payload)
             print(res_pages_update.json())
             return res_pages_update.json()['page']['status']
 
     # @param string path : ページのパス
     # @return string タプル (page_id, revision_id) : revision_id は更新に必要
     def get_page_info(self, path) :
+        print("getting growi page info..")
         params_ = self.growi_params.copy()
         params_["path"] = path
-        res_pages_get = requests.get(self.growi_url(self.api_method.PAGES_GET), params=params_)
+        res_pages_get = requests.get(self.growi_url(self.api_methods.PAGES_GET.value), params=params_)
+        #print(res_pages_get.json())
         if (res_pages_get and res_pages_get.json()["ok"]) :
             data = res_pages_get.json()
-            print(data)
             # page の内容
-            body = data["page"]["revision"]["body"]
-            pattern = "((.|\s)*?)([0-9]+\.?[0-9]+)$"    # 行末 0-9数字とdot
-            match_list = re.findall(pattern, body)
+            full_body = data["page"]["revision"]["body"]
+            pattern_body = "((.|\s)*)"
+            pattern_ts   = "([0-9]+\.?[0-9]+)$"    # 行末 0-9数字とdot
+            re_body = re.compile(pattern_body)
+            re_ts   = re.compile(pattern_ts)
+            ro_body = re_body.search(full_body)
+            ro_ts   = re_ts.search(full_body)
+
             latest_ts = ""
             body = ""
-            if (match_list) :
-                body = match_list[0][0]
-                latest_ts = match_list[0][2]
+            if (ro_body and ro_ts) :
+                body = ro_body.group(1)
+                latest_ts = ro_ts.group(1)
 
             if (data["ok"]) :
                 return (data["page"]["id"], data["page"]["revision"]["_id"], latest_ts, body)
@@ -98,7 +105,7 @@ class growi :
                 raise(Exception("can not get page_info because of something wrong, check path, params"))
         else :
             print("{} may not exist. or check your access right".format(path))
-            return None
+            return (None, None, None, None)
 
     
     # 渡されたpath に growi page があるか確認する
@@ -107,7 +114,7 @@ class growi :
     def check_if_page_exist(self, path) :
         info = self.get_page_info(path)
         if info :
-            page_id, revision_id, latest_ts = info
+            page_id, revision_id, latest_ts, _ = info
             return (True, latest_ts)
         else :
             return (False, None)
@@ -135,17 +142,20 @@ class growi :
     # FIXME: Content-Type header を上手く指定できないためか img をupload しても growi page では text/plain になってしまう
     # @param string path : ファイルをアップロードするページのパス
     # @param string file_path : アップロードするローカルファイルのパス
-    # @return string file_path : growi におけるアップロードしたファイルのパス (ex: /attachment/hogehoge/piyopiyo)
+    # @return string attachment_path : growi におけるアップロードしたファイルのパス (ex: /attachment/hogehoge/piyopiyo)
     def upload_attachment(self, path, file_path) :
+        if (file_path == r"hidden_by_limit") : 
+            return "hidden_by_limit"
         print("uploading growi attachment...")
         page_id, revision_id, latest_ts, _ = self.get_page_info(path)
         params_ = self.growi_params.copy()
         payload = {"page_id": page_id}
         headers_ = {"Content-Type" : "image/jpg"}
+        print(file_path)
         file = {"file": open(file_path, 'rb')}
         res = requests.post(self.growi_url("attachments.add"), params=params_, data=payload, files=file)
-        file_path = res.json()['attachment']['filePathProxied']
-        return file_path
+        attachment_path = res.json()['attachment']['filePathProxied']
+        return attachment_path
     
     # TODO 使いやすくする
     # @param string atttachment_id : 削除するファイルのGrowiにおけるid

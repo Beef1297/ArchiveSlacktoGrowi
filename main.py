@@ -2,6 +2,7 @@ import requests
 import os
 import sys
 import json
+import argparse
 from datetime import datetime
 from slack_client import slack
 from growi_client import growi
@@ -67,8 +68,9 @@ def update_log_page(path, growi, slack, messages) :
         for child_message in message.children :
             for file in child_message.files :
                 child_message.growi_attachments.append(growi.upload_attachment(path, file))
-    body = formatting_messages(body, messages, slack)
+    body = formatting_messages("", messages, slack)
     res = growi.update_page(body, path, growi.update_mode.APPEND)
+    return
 
 
 if __name__ == "__main__" :
@@ -76,21 +78,32 @@ if __name__ == "__main__" :
     with open("token.json", 'r') as token_file :
         tokens = json.load(token_file)
 
-    channel_name = ""
-    if (len(sys.argv) > 1) :
-        channel_name = sys.argv[1]
-    if (channel_name == "") :
-        channel_name = input() #python3
+    argparser = argparse.ArgumentParser(description="slack のチャンネルメッセージを Growi ページとしてアーカイブする")
+    argparser.add_argument("channnel_name", help="slack のチャンネル名")
+    argparser.add_argument("--page_name", help="growi のページ名．指定しない場合は channel_name になる")
 
+    args = argparser.parse_args()
+    channel_name = args.channel_name
+    page_name = args.page_name
+
+    if (channel_name == "") :
+        print("input slack channel name")
+        channel_name = input() #python3
+    if (page_name == "") :
+        print("input growi page name")
+        page_name = channel_name
+    
     log_path = "/Log/slack_channel/"
-    path = log_path + channel_name
+    path = log_path + page_name
     growi = growi(tokens["growi"]["token"])
     slack = slack(tokens["slack"]["token"])
 
-    is_exist, ts = growi.check_if_page_exist(path)
-    if (is_exist and ts) :
-        messages = slack.fetch_channel_messages(channel_name, ts)
-        update_log_page()
+    is_exist, oldest_ts = growi.check_if_page_exist(path)
+    if (is_exist and oldest_ts) :
+        print("update growi page")
+        messages = slack.fetch_channel_messages(channel_name, oldest_ts)
+        update_log_page(path, growi, slack, messages)
     else :
+        print("create growi page")
         messages = slack.fetch_channel_messages(channel_name, "0")
-        create_log_page(path, growi, slack)
+        create_log_page(path, growi, slack, messages)
