@@ -33,7 +33,7 @@ class growi :
         print("creating growi page...")
         # 先頭に slash は必ずつける
         if not path.startswith("/") :
-            path = "/" + path
+            path = "/" + str(path)
         page_info = self.get_page_info(path)
         if (page_info) :
             # createで競合した際は全て上書きするようにする
@@ -61,14 +61,16 @@ class growi :
         if info is None :
             raise(Exception("can not get page info '{}'".format(path)))
         page_id, revision_id, latest_ts, old_body = info
-
+        #print(old_body)
         if (mode is self.update_mode.APPEND) :
+            print("APPEND MODE")
             body = old_body + "\n" + body
             payload = {"body": body, "page_id": page_id, "revision_id": revision_id}
             res_pages_update = requests.post(self.growi_url(self.api_methods.PAGES_UPDATE.value), params=self.growi_params, data=payload)
-            print(res_pages_update.json())
+            #print(res_pages_update.json())
             return res_pages_update.json()["page"]["status"]
         elif (mode is self.update_mode.OVERWRITE) :
+            print("OVERWRITE MODE")
             payload = {"body": body, "page_id": page_id, "revision_id": revision_id}
             res_pages_update = requests.post(self.growi_url(self.api_methods.PAGES_UPDATE.value), params=self.growi_params, data=payload)
             print(res_pages_update.json())
@@ -86,17 +88,17 @@ class growi :
             data = res_pages_get.json()
             # page の内容
             full_body = data["page"]["revision"]["body"]
-            pattern_body = "((.|\s)*)"
-            pattern_ts   = "([0-9]+\.?[0-9]+)$"    # 行末 0-9数字とdot
-            re_body = re.compile(pattern_body)
-            re_ts   = re.compile(pattern_ts)
-            ro_body = re_body.search(full_body)
-            ro_ts   = re_ts.search(full_body)
+            pattern_body = "((.|\\s)*)\n"
+            pattern_ts   = "<([0-9]+\.?[0-9]+)>$"    # 行末 0-9数字とdot
+            ro_body = re.search(pattern_body, full_body)
+            ro_ts   = re.search(pattern_ts, full_body)
 
             latest_ts = ""
             body = ""
-            if (ro_body and ro_ts) :
+            if (ro_body) :
+                print(ro_body)
                 body = ro_body.group(1)
+            if (ro_ts) :
                 latest_ts = ro_ts.group(1)
 
             if (data["ok"]) :
@@ -105,7 +107,7 @@ class growi :
                 raise(Exception("can not get page_info because of something wrong, check path, params"))
         else :
             print("{} may not exist. or check your access right".format(path))
-            return (None, None, None, None)
+            return None
 
     
     # 渡されたpath に growi page があるか確認する

@@ -14,6 +14,8 @@ from slack_message import slack_message
 # TODO: 正規表現をつかって簡潔に書きたい, マジックナンバー(string) をなくす
 def formatting_messages(body, messages, slackclient) :
     print("formatting messages...")
+    if (len(messages) <= 0) :
+        raise(Exception("There is no messages for create/update"))
     for message in messages :
         m = slackclient.replace_userid_to_username(message.text)
         body += "\n- " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n"+ m + "\n"
@@ -37,9 +39,9 @@ def formatting_messages(body, messages, slackclient) :
     # Timestamp の追加
     # TODO: response の latest key と上手く兼ね合わせて単純にしたい
     if (len(messages[-1].children) > 0) :
-        body += "\n<{}>\n".format(messages[-1].children[-1].ts)
+        body += "\n<{}>".format(messages[-1].children[-1].ts)
     else :
-        body += "\n<{}>\n".format(messages[-1].ts)
+        body += "\n<{}>".format(messages[-1].ts)
         
     return body
 
@@ -79,13 +81,16 @@ if __name__ == "__main__" :
         tokens = json.load(token_file)
 
     argparser = argparse.ArgumentParser(description="slack のチャンネルメッセージを Growi ページとしてアーカイブする")
-    argparser.add_argument("channnel_name", help="slack のチャンネル名")
+    argparser.add_argument("channel_name", help="slack のチャンネル名")
     argparser.add_argument("--page_name", help="growi のページ名．指定しない場合は channel_name になる")
+    argparser.add_argument("--custom_oldest_ts", help="oldest_ts を指定する．Growi ページの ts は使わずに強制的に指定した ts でメッセージ取得する")
 
     args = argparser.parse_args()
     channel_name = args.channel_name
     page_name = args.page_name
-
+    custom_oldest_ts = args.custom_oldest_ts
+    print(custom_oldest_ts)
+    print(type(custom_oldest_ts))
     if (channel_name == "") :
         print("input slack channel name")
         channel_name = input() #python3
@@ -99,11 +104,17 @@ if __name__ == "__main__" :
     slack = slack(tokens["slack"]["token"])
 
     is_exist, oldest_ts = growi.check_if_page_exist(path)
-    if (is_exist and oldest_ts) :
-        print("update growi page")
+    if oldest_ts == "" :
+        oldest_ts = "0"
+    if custom_oldest_ts is not None :
+        oldest_ts = custom_oldest_ts
+
+    print(oldest_ts)
+    if (is_exist) :
+        print("{} is exist. update growi page".format(path))
         messages = slack.fetch_channel_messages(channel_name, oldest_ts)
         update_log_page(path, growi, slack, messages)
     else :
         print("create growi page")
-        messages = slack.fetch_channel_messages(channel_name, "0")
+        messages = slack.fetch_channel_messages(channel_name, oldest_ts)
         create_log_page(path, growi, slack, messages)
