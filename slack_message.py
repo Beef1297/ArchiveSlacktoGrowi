@@ -41,9 +41,14 @@ class slack_message :
                 header = {"Authorization" : "Bearer " + self.slackclient.slack_params["token"]}
                 res_file = requests.get(file_info["url_private"], headers=header)
                 file_type = file_info["filetype"]
-                file_path = "data"
+                base_path = "data"
+                file_path = ""
                 if (file_type == "jpg" or file_type == "png") :
-                    file_path = "img"
+                    file_path = os.path.join(base_path, "img")
+                else :
+                    file_path = os.path.join(base_path, "others")
+                if (not os.path.isdir(file_path)) :
+                    os.makedirs(file_path)
                 filename = file_info["id"] + "." + file_type
                 full_filename = os.path.join(file_path, filename)
                 
