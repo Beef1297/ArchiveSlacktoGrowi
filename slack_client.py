@@ -91,14 +91,13 @@ class slack :
         params_["channel"] = channel_id
         params_["count"] = 1000
         params_["oldest"] = oldest_ts or "0"
-        all_messages = []
         thread_ts_dict = {}
-        
+        messages = []
         while(True) :
             print("fetching channel messages...")
-            messages = []
             res_fetch = requests.get(self.slack_url("channels.history"), params=params_)
             fetch_messages = res_fetch.json()["messages"]
+            # slack message は新しい方から順に来るので
             for i in range(len(fetch_messages)-1, -1, -1) :
                 if "thread_ts" in fetch_messages[i] :
                     if fetch_messages[i]["thread_ts"] in thread_ts_dict :
@@ -118,10 +117,8 @@ class slack :
                     
             #print(res_fetch.json()["has_more"])
             
-            all_messages = messages + all_messages
             if (res_fetch.json()["has_more"]) :
-                params_["latest"] = fetch_messages[0]["ts"]
+                params_["oldest"] = fetch_messages[0]["ts"]
             else :
                 break
-
-        return all_messages
+        return messages
