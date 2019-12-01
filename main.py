@@ -61,7 +61,7 @@ def create_log_page(path, growi, slack, messages) :
     body = "# Archive: {}\n".format(channel_name)
     body = formatting_messages(body, messages, slack)
     res = growi.create_page(body, path)
-    return
+    return res
 
 def update_log_page(path, growi, slack, messages) :
     for message in messages :
@@ -72,7 +72,7 @@ def update_log_page(path, growi, slack, messages) :
                 child_message.growi_attachments.append(growi.upload_attachment(path, file))
     body = formatting_messages("", messages, slack)
     res = growi.update_page(body, path, growi.update_mode.APPEND)
-    return
+    return res
 
 
 if __name__ == "__main__" :
