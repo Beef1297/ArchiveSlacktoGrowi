@@ -89,12 +89,8 @@ if __name__ == "__main__" :
     channel_name = args.channel_name
     page_name = args.page_name
     custom_oldest_ts = args.custom_oldest_ts
-    print(custom_oldest_ts)
-    print(type(custom_oldest_ts))
-    if (channel_name == "") :
-        print("input slack channel name")
-        channel_name = input() #python3
-    if (page_name == "") :
+
+    if (page_name is None) :
         print("input growi page name")
         page_name = channel_name
     
