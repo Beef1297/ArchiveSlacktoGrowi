@@ -20,7 +20,7 @@ def formatting_messages(body, messages, slackclient) :
         m = slackclient.replace_userid_to_username(message.text)
         body += "\n- " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n"+ m + "\n"
         for attachment in message.growi_attachments :
-            if (attachment is not "hidden_by_limit") :
+            if (attachment is not "hidden_by_limit" or attachment is not "tombstone") :
                 body += "\n<img src={} width=50% />\n".format(attachment)
             else :
                 body += "\n`hidden_by_limit image`\n"

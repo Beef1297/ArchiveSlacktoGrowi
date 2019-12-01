@@ -148,6 +148,8 @@ class growi :
     def upload_attachment(self, path, file_path) :
         if (file_path == r"hidden_by_limit") : 
             return "hidden_by_limit"
+        if (file_path == r"tombstone") :
+            return "tombstone"
         print("uploading growi attachment...")
         page_id, revision_id, latest_ts, _ = self.get_page_info(path)
         params_ = self.growi_params.copy()

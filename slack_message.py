@@ -59,5 +59,4 @@ class slack_message :
                 
                 with open(full_filename, 'wb') as f :
                     f.write(res_file.content)
-        print(full_filenames)
         return full_filenames
