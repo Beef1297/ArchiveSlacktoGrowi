@@ -96,10 +96,10 @@ if __name__ == "__main__" :
     
     log_path = "/Log/slack_channel/"
     path = log_path + page_name
-    growi = growi(tokens["growi"]["token"])
-    slack = slack(tokens["slack"]["token"])
+    g = growi(tokens["growi"]["token"])
+    s = slack(tokens["slack"]["token"])
 
-    is_exist, oldest_ts = growi.check_if_page_exist(path)
+    is_exist, oldest_ts = g.check_if_page_exist(path)
     if oldest_ts == "" :
         oldest_ts = "0"
     if custom_oldest_ts is not None :
@@ -108,9 +108,9 @@ if __name__ == "__main__" :
     print(oldest_ts)
     if (is_exist) :
         print("{} is exist. update growi page".format(path))
-        messages = slack.fetch_channel_messages(channel_name, oldest_ts)
-        update_log_page(path, growi, slack, messages)
+        messages = s.fetch_channel_messages(channel_name, oldest_ts)
+        update_log_page(path, g, s, messages)
     else :
         print("create growi page")
-        messages = slack.fetch_channel_messages(channel_name, oldest_ts)
-        create_log_page(path, growi, slack, messages)
+        messages = s.fetch_channel_messages(channel_name, oldest_ts)
+        create_log_page(path, g, s, messages)
