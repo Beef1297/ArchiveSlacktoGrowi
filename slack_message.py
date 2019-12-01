@@ -34,6 +34,7 @@ class slack_message :
     def get_files(self) :
         full_filenames = []
         if ("files" in self.message) :
+            print("getting slack files...")
             for file_info in self.message["files"] :
                 if ("url_private" not in file_info) : 
                     full_filenames.append(file_info["mode"])
@@ -47,14 +48,16 @@ class slack_message :
                     file_path = os.path.join(base_path, "img")
                 else :
                     file_path = os.path.join(base_path, "others")
+                print(file_path)
                 if (not os.path.isdir(file_path)) :
                     os.makedirs(file_path)
                 filename = file_info["id"] + "." + file_type
                 full_filename = os.path.join(file_path, filename)
                 
-                if (file_path == "img") :
+                if (file_path == os.path.join(base_path, "img")) :
                     full_filenames.append(full_filename)
                 
                 with open(full_filename, 'wb') as f :
                     f.write(res_file.content)
+        print(full_filenames)
         return full_filenames
