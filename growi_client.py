@@ -22,7 +22,7 @@ class growi :
     # @param string method : Growi の API メソッド
     # @return API を叩くためのURL
     def growi_url(self, method) :
-        return "http://kaji-labnas.synology.me:3333/_api/{}".format(method)
+        return "http://192.168.1.71:3333/_api/{}".format(method)
 
     # @param string body : ページ本文
     # @param string path : growi のページの path ex) /Log/hogehoge/fugafuga
