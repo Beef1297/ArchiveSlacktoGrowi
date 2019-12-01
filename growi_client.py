@@ -88,8 +88,8 @@ class growi :
             data = res_pages_get.json()
             # page の内容
             full_body = data["page"]["revision"]["body"]
-            pattern_body = "((.|\\s)*)\n"
-            pattern_ts   = "<([0-9]+\.?[0-9]+)>$"    # 行末 0-9数字とdot
+            pattern_body = r"((.|\\s)*)\n"
+            pattern_ts   = r"<([0-9]+\.?[0-9]+)>$"    # 行末 0-9数字とdot
             ro_body = re.search(pattern_body, full_body)
             ro_ts   = re.search(pattern_ts, full_body)
 
@@ -152,7 +152,6 @@ class growi :
         page_id, revision_id, latest_ts, _ = self.get_page_info(path)
         params_ = self.growi_params.copy()
         payload = {"page_id": page_id}
-        headers_ = {"Content-Type" : "image/jpg"}
         print(file_path)
         file = {"file": open(file_path, 'rb')}
         res = requests.post(self.growi_url("attachments.add"), params=params_, data=payload, files=file)
