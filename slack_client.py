@@ -98,6 +98,7 @@ class slack :
             res_fetch = requests.get(self.slack_url("channels.history"), params=params_)
             fetch_messages = res_fetch.json()["messages"]
             # slack message は新しい方から順に来るので
+            # thread はまた別で取得したほうがよさそう..
             for i in range(len(fetch_messages)-1, -1, -1) :
                 if "thread_ts" in fetch_messages[i] :
                     if fetch_messages[i]["thread_ts"] in thread_ts_dict :
@@ -116,9 +117,16 @@ class slack :
                     messages.append(slack_message(fetch_messages[i], self, self.get_user_name(fetch_messages[i])))
                     
             #print(res_fetch.json()["has_more"])
-            
+            # FIXME
             if (res_fetch.json()["has_more"]) :
-                params_["oldest"] = fetch_messages[0]["ts"]
+                print(params_["oldest"])
+                if (params_["oldest"] == "0") :
+                    print("setting latest ts")
+                    params_["latest"] = fetch_messages[-1]["ts"]
+                else :
+                    print("setting oldest ts")
+                    params_["latest"] = "now"
+                    params_["oldest"] = fetch_messages[0]["ts"]
             else :
                 break
         return messages
