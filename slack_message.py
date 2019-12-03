@@ -45,18 +45,22 @@ class slack_message :
                 base_path = "data"
                 file_path = ""
                 if (file_type == "jpg" or file_type == "png") :
-                    file_path = os.path.join(base_path, "img")
+                    file_path = os.path.join(base_path, self.slackclient.channel_name, "img")
                 else :
-                    file_path = os.path.join(base_path, "others")
+                    file_path = os.path.join(base_path, self.slackclient.channel_name, "others")
                 print(file_path)
                 if (not os.path.isdir(file_path)) :
                     os.makedirs(file_path)
                 filename = file_info["id"] + "." + file_type
                 full_filename = os.path.join(file_path, filename)
                 
-                if (file_path == os.path.join(base_path, "img")) :
+                if (file_path == os.path.join(base_path, self.slackclient.channel_name, "img")) :
                     full_filenames.append(full_filename)
-                
+
+                if (os.path.exists(full_filename)) :
+                    print("{} is already exist. so skip save")
+                    continue
+
                 with open(full_filename, 'wb') as f :
                     f.write(res_file.content)
         return full_filenames

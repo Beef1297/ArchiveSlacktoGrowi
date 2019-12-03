@@ -14,6 +14,7 @@ class slack :
     def __init__(self, token) :
         self.slack_params = {"token": token}
         self.users = {} # user_id と real_name を簡単にキャッシュしておく
+        self.channel_name = ""
         self.fetch_users_list()
         return
     
@@ -31,6 +32,7 @@ class slack :
     # @param string channel : チャンネルの名前
     # @return string チャンネルの IDを返す
     def get_channel_id(self, channel) :
+        self.channel_name = channel
         channel_info_list = self.get_conversations_list()
         for channel_info in channel_info_list :
             if (channel_info["name"] == channel) :
@@ -93,6 +95,7 @@ class slack :
     # 同じ thread_ts を持つもので，一番時系列が古いものを親として考える．
     def fetch_channel_messages(self, channel, oldest_ts) :
 
+        self.channel_name = channel
         channel_id = self.get_channel_id(channel)
         params_ = self.slack_params.copy()
         params_["channel"] = channel_id
