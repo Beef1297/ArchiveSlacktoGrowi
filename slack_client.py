@@ -1,9 +1,16 @@
 import requests
 import re
 from slack_message import slack_message
+from enum import Enum
 
 class slack :
     # クラス内で import できない？
+    class api_methods(Enum) :
+        CONVERSATIONS_LIST = "conversations.list"
+        USERS_LIST = "users.list"
+        USERS_INFO = "users.info"
+        CHANNELS_HISTORY = "channels.history"
+        
     def __init__(self, token) :
         self.slack_params = {"token": token}
         self.users = {} # user_id と real_name を簡単にキャッシュしておく
@@ -91,42 +98,55 @@ class slack :
         params_["channel"] = channel_id
         params_["count"] = 1000
         params_["oldest"] = oldest_ts or "0"
-        thread_ts_dict = {}
-        messages = []
+
+        
+        print("fetching slack channel messages...")
+        fetch_messages = []
+        # FIXME: slack API method の仕様に則った実装に変更
+        # ファイルの保存などは，既にある場合は取得しないなどにすれば時間もかからないはず
+        # メッセージ取得して，更新分だけ抽出し使用するというのが綺麗になりそう
         while(True) :
-            print("fetching channel messages...")
-            res_fetch = requests.get(self.slack_url("channels.history"), params=params_)
-            fetch_messages = res_fetch.json()["messages"]
-            # slack message は新しい方から順に来るので
-            # thread はまた別で取得したほうがよさそう..
-            for i in range(len(fetch_messages)-1, -1, -1) :
-                if "thread_ts" in fetch_messages[i] :
-                    if fetch_messages[i]["thread_ts"] in thread_ts_dict :
-                        # ここの username の取り扱いがすごい面倒
-                        # もっときれいに書きたい
-                        # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
-                        username = self.get_user_name(fetch_messages[i])
-                        sm = slack_message(fetch_messages[i], self, username)
-                        messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(sm)
-                        #print(fetch_messages[i])
-                    else :
-                        username= self.get_user_name(fetch_messages[i])
-                        messages.append(slack_message(fetch_messages[i], self, username))
-                        thread_ts_dict[fetch_messages[i]["thread_ts"]] = len(messages)-1
-                else :
-                    messages.append(slack_message(fetch_messages[i], self, self.get_user_name(fetch_messages[i])))
-                    
-            #print(res_fetch.json()["has_more"])
-            # FIXME
-            if (res_fetch.json()["has_more"]) :
-                print(params_["oldest"])
-                if (params_["oldest"] == "0") :
+            res_channels_history = requests.get(self.slack_url(self.api_methods.CHANNELS_HISTORY.value), params=params_)
+
+            if (params_["oldest"] == "0") :
+            # oldest が設定されてないときは latest によった messages が取得されるので (Slack API Method 参照)
+            # 最古のメッセージの ts を最新とすることで，さらに前にさかのぼることができる              
+                fetch_messages = fetch_messages + res_channels_history.json()["messages"]
+                if (res_channels_history.json()["has_more"]) :
                     print("setting latest ts")
                     params_["latest"] = fetch_messages[-1]["ts"]
                 else :
-                    print("setting oldest ts")
-                    params_["latest"] = "now"
-                    params_["oldest"] = fetch_messages[0]["ts"]
+                    break
             else :
-                break
+            # oldest が設定されている時, 本プログラムでは latest を設定することは上の時しかない. 上の時は基本的に 新規にページを作成する時
+            # 更新する時は，基本 oldest を設定する．だから取得したメッセージの最新ts を oldest にすることで新しいメッセージを取得できる．               
+                fetch_messages = res_channels_history.json()["messages"] + fetch_messages
+                if (res_channels_history.json()["has_more"]) :
+                    print("setting oldest ts")
+                    params_["oldest"] = fetch_messages[0]["ts"]
+                else :
+                    break
+
+        messages = []
+        thread_ts_dict = {}
+        print("instantiating slack messages...")
+        # slack message は新しい方から順に来るので
+        # thread はまた別で取得したほうがよさそう..
+        for i in range(len(fetch_messages)-1, -1, -1) :
+            if "thread_ts" in fetch_messages[i] :
+                if fetch_messages[i]["thread_ts"] in thread_ts_dict :
+                    # ここの username の取り扱いがすごい面倒
+                    # もっときれいに書きたい
+                    # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
+                    username = self.get_user_name(fetch_messages[i])
+                    sm = slack_message(fetch_messages[i], self, username)
+                    messages[thread_ts_dict[fetch_messages[i]["thread_ts"]]].children.append(sm)
+                    #print(fetch_messages[i])
+                else :
+                    username= self.get_user_name(fetch_messages[i])
+                    messages.append(slack_message(fetch_messages[i], self, username))
+                    thread_ts_dict[fetch_messages[i]["thread_ts"]] = len(messages)-1
+            else :
+                messages.append(slack_message(fetch_messages[i], self, self.get_user_name(fetch_messages[i])))
+                
         return messages
