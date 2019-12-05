@@ -9,6 +9,27 @@ from growi_client import growi
 from slack_message import slack_message
 
 
+HIDDEN_BY_LIMIT = "hidden_by_limit" # 制限によって削除されたもの
+TOMBSTONE = "tombstone" #ユーザによって削除されたファイル
+
+def _is_hidden_or_deleted(attachment) :
+    return attachment is not HIDDEN_BY_LIMIT and attachment is not TOMBSTONE
+
+def _file_text_mdtype(attachment) :
+    if attachment is HIDDEN_BY_LIMIT :
+        return "\n`hidden_by_limit`\n"
+    elif attachment is TOMBSTONE :
+        return "\ntombstone (削除されました)\n"
+    else :
+        return "\n<img src={} width=50% />\n".format(attachment)
+
+def _message_text_mdtype(slackclient, message, is_thread) :
+    m = slackclient.replace_userid_to_username(message.text)
+    if not is_thread :
+        return "\n- " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n"+ m + "\n"
+    else :
+        return "\n- |→ " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n" + m + "\n"
+
 # growi page 制作のために，slack から取得したメッセージを整形
 # 最新メッセージが一番最初に保存されているので，逆順にみていく
 # TODO: 正規表現をつかって簡潔に書きたい, マジックナンバー(string) をなくす
@@ -17,25 +38,16 @@ def formatting_messages(body, messages, slackclient) :
     if (len(messages) <= 0) :
         raise(Exception("There is no messages for create/update"))
     for message in messages :
-        m = slackclient.replace_userid_to_username(message.text)
-        body += "\n- " + message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n"+ m + "\n"
+        body += _message_text_mdtype(slackclient, message, False)
         for attachment in message.growi_attachments :
-            if (attachment is not "hidden_by_limit" or attachment is not "tombstone") :
-                body += "\n<img src={} width=50% />\n".format(attachment)
-            else :
-                body += "\n`hidden_by_limit image`\n"
-            #formattedMessages += "![" + attachment + "](" + attachment + ")\n" 
+            body += _file_text_mdtype(attachment)
         
         for child_message in message.children :
-            body += "\n- |→ " + child_message.username + ": " + str(datetime.fromtimestamp(int(float(message.ts))))+"\n" + child_message.text + "\n"
+            body += _message_text_mdtype(slackclient, message, True)
 
             for attachment in child_message.growi_attachments : 
-                if (attachment is not "hidden_by_limit") :
-                   body += "\n<img src={} width=50% />\n".format(attachment)
-                else :
-                   body += "\n`hidden_by_limit image`\n"
+                body += _file_text_mdtype(attachment)
  
-    
     # Timestamp の追加
     # TODO: response の latest key と上手く兼ね合わせて単純にしたい
     if (len(messages[-1].children) > 0) :
