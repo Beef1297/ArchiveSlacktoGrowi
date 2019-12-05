@@ -5,10 +5,10 @@ import os
 # thread_ts が スレッドのtime stamp
 # file だったら private_url が urlに
 class slack_message :
-    def __init__(self, _message, _slackclient, _username) :
+    def __init__(self, _message, _slackclient) :
         self.slackclient = _slackclient
         self.message = _message
-        self.username = _username
+        self.username = _slackclient.get_user_name(_message)
         self.text = self.get_text()
         self.thread_ts = self.getThread_TS() if self.isThread() else None
         self.ts = self.get_ts()

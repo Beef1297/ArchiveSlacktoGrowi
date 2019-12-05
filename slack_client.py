@@ -96,19 +96,14 @@ class slack :
         for i in range(len(res_msg_list)-1, -1, -1) :
             if "thread_ts" in res_msg_list[i] :
                 if res_msg_list[i]["thread_ts"] in thread_ts_dict :
-                    # ここの username の取り扱いがすごい面倒
-                    # もっときれいに書きたい
-                    # そもそも，slackclient が id と name の対応を持っているならここでわざわざ username を渡す必要はない
-                    username = self.get_user_name(res_msg_list[i])
-                    sm = slack_message(res_msg_list[i], self, username)
+                    sm = slack_message(res_msg_list[i], self)
                     messages[thread_ts_dict[res_msg_list[i]["thread_ts"]]].children.append(sm)
                     #print(res_msg_list[i])
                 else :
-                    username= self.get_user_name(res_msg_list[i])
-                    messages.append(slack_message(res_msg_list[i], self, username))
+                    messages.append(slack_message(res_msg_list[i], self))
                     thread_ts_dict[res_msg_list[i]["thread_ts"]] = len(messages)-1
             else :
-                messages.append(slack_message(res_msg_list[i], self, self.get_user_name(res_msg_list[i])))
+                messages.append(slack_message(res_msg_list[i], self))
         return messages
 
     # slack_message を 配列で返す
