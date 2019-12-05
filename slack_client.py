@@ -26,7 +26,7 @@ class slack :
     # @param
     # @return 辞書型配列 slack のチャンネルのリストを返す  (詳しくは Slack API Method 参照)
     def get_conversations_list(self) :
-        res = requests.get(self.slack_url("conversations.list"), params=self.slack_params)
+        res = requests.get(self.slack_url(self.api_methods.CONVERSATIONS_LIST.value), params=self.slack_params)
         return res.json()["channels"]
 
     # @param string channel : チャンネルの名前
@@ -43,7 +43,7 @@ class slack :
     # @param
     # @return user のリストをオブジェクトのプロパティとして取得しておく (簡単なキャッシュのつもり)
     def fetch_users_list(self) :
-        res_userslist = requests.get(self.slack_url("users.list"), params=self.slack_params)
+        res_userslist = requests.get(self.slack_url(self.api_methods.USERS_LIST.value), params=self.slack_params)
         for res in res_userslist.json()["members"] :
             if ("real_name" in res) :
                 self.users[res["id"]] = res["real_name"]
@@ -68,7 +68,7 @@ class slack :
         else :
             params_ = self.slack_params.copy()
             params_["user"] = user_id
-            res_user_info = requests.get(self.slack_url("users.info"), params=params_)
+            res_user_info = requests.get(self.slack_url(self.api_methods.USERS_INFO.value), params=params_)
             self.users[user_id] = res_user_info.json()["user"]["real_name"]
             return self.users[user_id]
     
@@ -125,7 +125,6 @@ class slack :
         params_["channel"] = channel_id
         params_["count"] = 1000
         params_["oldest"] = oldest_ts or "0"
-
         
         print("fetching slack channel messages...")
         res_msg_list = []
@@ -145,7 +144,7 @@ class slack :
                     break
             else :
             # oldest が設定されている時, 本プログラムでは latest を設定することは上の時しかない. 上の時は基本的に 新規にページを作成する時
-            # 更新する時は，基本 oldest を設定する．だから取得したメッセージの最新ts を oldest にすることで新しいメッセージを取得できる．               
+            # 更新する時は，基本 oldest を設定する．だから取得したメッセージの最新ts を oldest にすることで新しいメッセージを取得できる．
                 res_msg_list = res_channels_history.json()["messages"] + res_msg_list
                 if (res_channels_history.json()["has_more"]) :
                     print("setting oldest ts")
