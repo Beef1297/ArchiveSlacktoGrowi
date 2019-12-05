@@ -85,12 +85,14 @@ class slack :
 
         return t
     
-    def reverse_slack_messages_by_ts(self, res_msg_list) :
+    # @param res_msg_list: slack api - channels history の response内の "messages" list 
+    # @return それぞれの "message" より作成したslack_message インスタンスのリスト
+    # thread は親メッセージの child_messsages に含まれる．
+    def _reverse_slack_messages_by_ts(self, res_msg_list) :
         messages = []
         thread_ts_dict = {}
         print("instantiating slack messages...")
-        # slack message は新しい方から順に来るので
-        # thread はまた別で取得したほうがよさそう..
+        # slack message は新しい方から順に来るため
         for i in range(len(res_msg_list)-1, -1, -1) :
             if "thread_ts" in res_msg_list[i] :
                 if res_msg_list[i]["thread_ts"] in thread_ts_dict :
@@ -113,9 +115,7 @@ class slack :
     # https://api.slack.com/methods/channels.history
     # get request で メッセージの最大取得数は 1000
     # 1000 以上メッセージがある場合は，リクエストを複数回投げないといけない
-    # また，取得した後に メッセージは slack_message の instance として保存していき，
-    # スレッドは，children に追加していく．最新のメッセージから取得されるので時系列順に並べるために
-    # 逆から参照するようにしている
+    # また，取得した後に メッセージは slack_message の instance として保存していき
     # 同じ thread_ts を持つもので，一番時系列が古いものを親として考える．
     def fetch_channel_messages(self, channel, oldest_ts) :
 
@@ -129,7 +129,6 @@ class slack :
         
         print("fetching slack channel messages...")
         res_msg_list = []
-        # FIXME: slack API method の仕様に則った実装に変更
         # ファイルの保存などは，既にある場合は取得しないなどにすれば時間もかからないはず
         # メッセージ取得して，更新分だけ抽出し使用するというのが綺麗になりそう
         while(True) :
@@ -153,7 +152,7 @@ class slack :
                     params_["oldest"] = res_msg_list[0]["ts"]
                 else :
                     break
-        messages = self.reverse_slack_messages_by_ts(res_msg_list)
+        messages = self._reverse_slack_messages_by_ts(res_msg_list)
         
                 
         return messages
